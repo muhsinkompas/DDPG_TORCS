@@ -10,8 +10,13 @@ from sklearn.cluster import KMeans
 
 if __name__ == "__main__":
     activationFilesAalborg = []
+<<<<<<< HEAD
     for i in range(101):
         activationFilesAalborg.append(open("Activations/Aalborg/"+str(i),"r"))
+=======
+    for i in range(584):
+        activationFilesAalborg.append(open("Activations/CGSpeedwaynumber_1/"+str(i),"r"))
+>>>>>>> 24c660e42796a578ff388ac8c348a94b921c0172
     activationAalborg = []
     for file in activationFilesAalborg:
         activationAalborg.append([float(i) for i in file.read().split("\n") if i!=""])  

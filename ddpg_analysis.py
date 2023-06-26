@@ -22,7 +22,7 @@ import timeit
 
 OU = OU()       #Ornstein-Uhlenbeck Process
 
-def playGame(train_indicator=0,analysis=False):    #1 means Train, 0 means simply Run
+def playGame(train_indicator=1,analysis=False):    #1 means Train, 0 means simply Run
     BUFFER_SIZE = 100000
     BATCH_SIZE = 32
     GAMMA = 0.99
@@ -97,7 +97,7 @@ def playGame(train_indicator=0,analysis=False):    #1 means Train, 0 means simpl
             a_t_original = actor.model.predict(s_t.reshape(1, s_t.shape[0])) # actor activations
 
             if analysis:
-                trackName = "Aalborg"
+                trackName = "CGSpeedwaynumber_1"
                 activationFiles.append(open("Activations/"+trackName+"/"+str(j),"w"))
                 last_layer_model = Model(actor.model.input,actor.model.get_layer("dense_2").output)
                 
