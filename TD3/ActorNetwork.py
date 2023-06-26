@@ -23,7 +23,7 @@ class ActorNetwork(nn.Module):
 
 
     def forward(self, x):
-        print("actor")
+        #print("actor")
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         out1 = t.tanh(self.steering(x))

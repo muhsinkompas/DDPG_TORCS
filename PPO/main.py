@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import gym
 from ppo import *
@@ -21,9 +23,9 @@ C_UPDATE_STEPS = 10
 S_DIM, A_DIM = 29, 3
 METHOD = [
     dict(name='kl_pen', kl_target=0.01, lam=1.0),   # KL penalty; lam is actually beta from the PPO paper
-    dict(name='clip', epsilon=0.1),           # Clipped surrogate objective, find this is better
+    dict(name='clip', epsilon=0.2),           # Clipped surrogate objective, find this is better
 ][1]        # choose the method for optimization
-
+#old eps =0.1
 
 # train_test = 0 for train; =1 for test
 train_test = 0
@@ -60,7 +62,7 @@ for ep in range(iter_num, EP_MAX):
     print("-"*50)
     print("episode: ", ep)
 
-    if np.mod(ep, 100) == 0:
+    if np.mod(ep, 25) == 0:
         ob = env.reset(relaunch=True)   #relaunch TORCS every N episode because of the memory leak error
     else:
         ob = env.reset()
@@ -72,9 +74,11 @@ for ep in range(iter_num, EP_MAX):
 
     for t in range(EP_LEN):    # in one episode
         a = ppo.choose_action(s)
+        print(a)
         a[0] = np.clip(a[0],-1.0,1.0)
         a[1] = np.clip(a[1],0.0,1.0)
         a[2] = np.clip(a[2],0.0,1.0)  
+        print(a)
         ob, r, done, _ = env.step(a)
         s_ = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))  
         if (train_test == 0):

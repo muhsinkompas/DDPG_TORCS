@@ -80,7 +80,7 @@ else:
 steps = 0
 for i in range(2000):
 
-    if np.mod(i, 3) == 0:
+    if np.mod(i, 5) == 0:
         ob, distFromStart = env.reset(relaunch = True)
     else:
         ob, distFromStart = env.reset()
@@ -106,9 +106,9 @@ for i in range(2000):
         noise_t[0][2] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][2], -0.1, 1.00, 0.05)
 
         #stochastic brake
-        if random.random() <= 0.1:
-            print("apply the brake")
-            noise_t[0][2] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][2], 0.2, 1.00, 0.10)
+        # if random.random() <= 0.1:
+        #     print("apply the brake")
+        #     noise_t[0][2] = train_indicator * max(epsilon, 0) * OU.function(a_t_original[0][2], 0.2, 1.00, 0.10)
         
         a_t[0][0] = a_t_original[0][0] + noise_t[0][0]
         a_t[0][1] = a_t_original[0][1] + noise_t[0][1]
@@ -131,9 +131,9 @@ for i in range(2000):
         y_t = torch.tensor(np.asarray([e[1] for e in batch]), device=device).float()
         
         # Compute the target Q value
-        print("before actor")
+        #print("before actor")
         target_q_values1, target_q_values2 = target_critic(new_states, target_actor(new_states))
-        print("after actor")
+        #print("after actor")
         target_q_values = torch.min(target_q_values1,target_q_values2)
         
         for k in range(len(batch)):
@@ -154,9 +154,9 @@ for i in range(2000):
             optimizer_critic.zero_grad()
             loss.backward(retain_graph=True)                         ##for param in critic.parameters(): param.grad.data.clamp(-1, 1)
             optimizer_critic.step()
-            print("before actor1")
+            #print("before actor1")
             a_for_grad = actor(states)
-            print("after actor1", a_for_grad)
+            #print("after actor1", a_for_grad)
             a_for_grad.requires_grad_()    #enables the requires_grad of a_for_grad
             q_values_for_grad = critic.Q1(states, a_for_grad)
             critic.zero_grad()
@@ -177,7 +177,7 @@ for i in range(2000):
             #soft update for target network
             #actor_params = list(actor.parameters())
             #critic_params = list(critic.parameters())
-            print("soft updates target network")
+            #print("soft updates target network")
             new_actor_state_dict = collections.OrderedDict()
             new_critic_state_dict = collections.OrderedDict()
             for var_name in target_actor.state_dict():
@@ -190,10 +190,16 @@ for i in range(2000):
         
         s_t = s_t1
         steps +=1
-        print("---Episode ", i , "  Action:", a_t, "  Reward:", r_t, "  Loss:", int(loss))
+        #print("---Episode ", i , "  Action:", a_t, "  Reward:", r_t, "  Loss:", int(loss))
+        print("="*100)
+        print("--- Episode : {:<4}\tActions ".format(i)+ np.array2string(a_t, formatter={'float_kind': '{0:.3f}'.format})+"\tReward : {:8.4f}\tLoss : {:<8}".format(r_t,int(loss))+" ---")
+        print("="*100)
         file_reward.write(str(i) + " "+ str(steps) + " "+ str(distFromStart) + " "+ str(r_t) +" "+ str(a_t[0][0]) +" "+ str(a_t[0][1]) +" "+ str(a_t[0][2]) + " "+ str(int(loss))+"\n") 
         file_states.write(str(i) + " "+ str(steps) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
-        print(str(i) + " "+ str(steps) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
+        
+        #print(str(i) + " "+ str(steps) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
+        
+        
         if done:
             print("I'm dead")
             break

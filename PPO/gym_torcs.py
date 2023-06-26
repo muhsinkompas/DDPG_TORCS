@@ -12,9 +12,10 @@ import sys
 
 
 class TorcsEnv:
-    terminal_judge_start = 50 #1000  # If after 100 timestep still no progress, terminated
-    termination_limit_progress = 5  # [km/h], episode terminates if car is running slower than this limit
+    terminal_judge_start = 100 #1000  # If after 100 timestep still no progress, terminated
+    termination_limit_progress = 3  # [km/h], episode terminates if car is running slower than this limit
     default_speed = 50 
+    
     initial_reset = True
 
     def __init__(self, vision=False, throttle=False, gear_change=False):
@@ -68,10 +69,13 @@ class TorcsEnv:
 
         # Steering
         action_torcs['steer'] = this_action['steer']  # in [-1, 1]
+        steeringg = action_torcs['steer']
+        #print(steeringg*45)
+        
 
         #  Simple Autnmatic Throttle Control by Snakeoil
         if self.throttle is False:
-            sys.exit()
+            #sys.exit()
 
             target_speed = self.default_speed
             if client.S.d['speedX'] < target_speed - (client.R.d['steer']*50):
@@ -132,27 +136,28 @@ class TorcsEnv:
         sp = np.array(obs['speedX'])
         damage = np.array(obs['damage'])
         rpm = np.array(obs['rpm'])
-
+        #episode_terminate = False
         progress = sp*np.cos(obs['angle']) - np.abs(sp*np.sin(obs['angle'])) - sp * np.abs(obs['trackPos'])
         reward = progress
 
         # collision detection
         if obs['damage'] - obs_pre['damage'] > 0:
             reward = -1
+            #episode_terminate = True
         # Termination judgement #########################
-        episode_terminate = False
+        
 
 #---------------------------------------------------
         if (abs(track.any()) > 1 or abs(trackPos) > 1):  # Episode is terminated if the car is out of track
             print("Out of track ")
-            reward = -100 #-200
+            reward = -200 #-200
             episode_terminate = True
             client.R.d['meta'] = True
 
         if self.terminal_judge_start < self.time_step: # Episode terminates if the progress of agent is small
             if progress < self.termination_limit_progress:
                 print("No progress", progress)
-                reward = -100 
+                reward = -20 
                 episode_terminate = True
                 client.R.d['meta'] = True
 #---------------------------------------------------

@@ -45,6 +45,7 @@ class TorcsEnv:
 
         obs = client.S.d  # Get the current full-observation from torcs
         """
+        
         if throttle is False:
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(1,))
         else:
@@ -142,10 +143,12 @@ class TorcsEnv:
         # collision detection
         if obs['damage'] - obs_pre['damage'] > 0:
             reward = -1
+            episode_terminate = True
+            client.R.d['meta'] = True
 
         # Termination judgement #########################
         episode_terminate = False
-        """
+        
         if (abs(track.any()) > 1 or abs(trackPos) > 1):  # Episode is terminated if the car is out of track
             reward = -200
             episode_terminate = True
@@ -154,10 +157,23 @@ class TorcsEnv:
         if self.terminal_judge_start < self.time_step: # Episode terminates if the progress of agent is small
             if progress < self.termination_limit_progress:
                 print("No progress")
+                reward = -50
                 episode_terminate = True
                 client.R.d['meta'] = True
-	    """
+	    
         if np.cos(obs['angle']) < 0: # Episode is terminated if the agent runs backward
+            reward = -50
+            episode_terminate = True
+            client.R.d['meta'] = True
+        
+        #print("################################################")
+        #print(obs['lastLapTime'])
+        #print("################################################")
+        
+        
+        if obs['lastLapTime'] > 0:
+            print("...LAP FINISHED...")
+            reward = 100
             episode_terminate = True
             client.R.d['meta'] = True
 
@@ -206,7 +222,7 @@ class TorcsEnv:
         return self.observation
 
     def reset_torcs(self):
-       #print("relaunch torcs")
+        print("relaunch torcs")
         os.system('pkill torcs')
         time.sleep(0.5)
         if self.vision is True:
@@ -250,7 +266,8 @@ class TorcsEnv:
                      'rpm',
                      'track', 
                      'trackPos',
-                     'wheelSpinVel']
+                     'wheelSpinVel',
+                     'lastLapTime']
             Observation = col.namedtuple('Observaion', names)
             return Observation(focus=np.array(raw_obs['focus'], dtype=np.float32)/200.,
                                speedX=np.array(raw_obs['speedX'], dtype=np.float32)/300.0,
@@ -262,7 +279,8 @@ class TorcsEnv:
                                rpm=np.array(raw_obs['rpm'], dtype=np.float32)/10000,
                                track=np.array(raw_obs['track'], dtype=np.float32)/200.,
                                trackPos=np.array(raw_obs['trackPos'], dtype=np.float32)/1.,
-                               wheelSpinVel=np.array(raw_obs['wheelSpinVel'], dtype=np.float32)), raw_obs['distRaced']
+                               wheelSpinVel=np.array(raw_obs['wheelSpinVel'], dtype=np.float32),
+                               lastLapTime=np.array(raw_obs['lastLapTime'], dtype=np.float32)), raw_obs['distRaced']
         else:
             names = ['focus',
                      'speedX', 'speedY', 'speedZ', 'angle',

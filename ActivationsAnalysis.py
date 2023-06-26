@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors
 from sklearn import datasets
@@ -8,7 +10,7 @@ from sklearn.cluster import KMeans
 
 if __name__ == "__main__":
     activationFilesAalborg = []
-    for i in range(584):
+    for i in range(101):
         activationFilesAalborg.append(open("Activations/Aalborg/"+str(i),"r"))
     activationAalborg = []
     for file in activationFilesAalborg:

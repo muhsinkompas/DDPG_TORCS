@@ -185,4 +185,4 @@ def playGame(train_indicator=0,analysis=False):    #1 means Train, 0 means simpl
 
 if __name__ == "__main__":
     write_activations = True # boolean used to know if you want to store the NN's last hidden layer activations in a file or not
-    playGame(0,write_activations)
+    playGame(1,write_activations)
