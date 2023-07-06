@@ -141,7 +141,9 @@ class TorcsEnv:
 
         progress = sp*np.cos(obs['angle']) - np.abs(sp*np.sin(obs['angle'])) - sp * np.abs(obs['trackPos'])
         reward = progress
-
+        episode_terminate = False
+        
+        
         # collision detection
         if obs['damage'] - obs_pre['damage'] > 0:
             reward += -100
@@ -180,8 +182,8 @@ class TorcsEnv:
                     self.end_type = 3
                     
         if episode_terminate == False:
-            self.oot_count -= 1
-            self.no_prog_count -= 1
+            self.oot_count += -1
+            self.no_prog_count += -1
             if self.oot_count < 0:
                 self.oot_count = 0
             if self.no_prog_count < 0:
@@ -213,7 +215,7 @@ class TorcsEnv:
 
         self.time_step += 1
         ob, distFromStart = self.get_obs()
-        return ob, distFromStart, reward, client.R.d['meta'], {}
+        return ob, distFromStart, reward, client.R.d['meta'], {}, self.end_type
 
     def reset(self, relaunch=False):
         self.time_step = 0
@@ -240,7 +242,7 @@ class TorcsEnv:
         self.last_u = None
 
         self.initial_reset = False
-        return self.get_obs(), self.end_type
+        return self.get_obs()
 
     def end(self):
         os.system('pkill torcs')

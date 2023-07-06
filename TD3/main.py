@@ -12,6 +12,7 @@ from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
 from OU import OU
 import rwfile
+import wOutputToCsv as w_Out
 
 state_size = 29
 action_size = 3
@@ -42,7 +43,7 @@ def init_weights(m):
 
 file_path = 'Best/bestlaptime.csv'
 best_lap_time = rwfile.RW.read_float_from_file(file_path)
-
+w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv')
 
 
 actor = ActorNetwork(state_size).to(device)
@@ -79,9 +80,10 @@ optimizer_critic = torch.optim.Adam(critic.parameters(), lr=LRC)
 #env environment
 env = TorcsEnv(vision=VISION, throttle=True, gear_change=False)
 
-file_reward = open("results/results2.txt","w") 
-file_distances = open("results/distances2.txt","w") 
-file_states = open("results/states2.txt", "w")
+# file_reward = open("results/results2.txt","w") 
+# file_distances = open("results/distances2.txt","w") 
+# file_states = open("results/states2.txt", "w")
+
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
 else:
@@ -213,8 +215,15 @@ for i in range(2000):
         print("="*100)
         print("--- Episode : {:<4}\tActions ".format(i)+ np.array2string(a_t, formatter={'float_kind': '{0:.3f}'.format})+"\tReward : {:8.4f}\tLoss : {:<8}".format(r_t,int(loss))+" ---")
         print("="*100)
-        file_reward.write(str(i) + " "+ str(steps) + " "+ str(distFromStart) + " "+ str(r_t) +" "+ str(a_t[0][0]) +" "+ str(a_t[0][1]) +" "+ str(a_t[0][2]) + " "+ str(int(loss))+"\n") 
-        file_states.write(str(i) + " "+ str(steps) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
+        
+        #file_reward.write(str(i) + " "+ str(steps) + " "+ str(distFromStart) + " "+ str(r_t) +" "+ str(a_t[0][0]) +" "+ str(a_t[0][1]) +" "+ str(a_t[0][2]) + " "+ str(int(loss))+"\n") 
+        #file_states.write(str(i) + " "+ str(steps) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
+        
+        #print("saving csv")
+        #print(i, j, a_t[0], r_t, s_t, end_type, ob.focus, ob.curLapTime, best_lap_time, loss)
+        #print("saving csv")
+        output_csv = np.hstack((i, j, a_t[0], r_t, s_t, end_type, ob.focus, ob.curLapTime, best_lap_time, int(loss)))
+        w_csv.append_numpy_array_to_csv(np.matrix(output_csv))
         
         #print(str(i) + " "+ str(steps) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
         
@@ -222,16 +231,17 @@ for i in range(2000):
         if done:
             print("I'm dead")
             break
-    file_distances.write(str(i) + " "+ str(distFromStart) +"\n")
+    #file_distances.write(str(i) + " "+ str(distFromStart) +"\n")
     if np.mod(i, 3) == 0:
         if (train_indicator):
             print("saving model")
             torch.save(actor.state_dict(), 'actormodel.pth')
             torch.save(critic.state_dict(), 'criticmodel.pth')
 
-file_reward.close()   
-file_distances.close()
-file_states.close()
+#file_reward.close()   
+#file_distances.close()
+#file_states.close()
+
 env.end()
 print("Finish.")
 
