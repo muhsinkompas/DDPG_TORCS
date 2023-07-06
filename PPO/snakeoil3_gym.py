@@ -319,7 +319,7 @@ class ServerState():
         out= str()
         sensors= [ # Select the ones you want in the order you want them.
         #'curLapTime',
-        #'lastLapTime',
+        'lastLapTime',
         'stucktimer',
         #'damage',
         #'focus',

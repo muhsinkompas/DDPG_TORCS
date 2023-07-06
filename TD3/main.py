@@ -11,6 +11,7 @@ from ReplayBuffer import ReplayBuffer
 from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
 from OU import OU
+import rwfile
 
 state_size = 29
 action_size = 3
@@ -18,6 +19,8 @@ LRA = 0.0001
 LRC = 0.001
 BUFFER_SIZE = 100000  #to change
 BATCH_SIZE = 32
+
+
 GAMMA = 0.95
 EXPLORE = 100000.
 epsilon = 1
@@ -25,6 +28,8 @@ train_indicator = 1   # train or not
 TAU = 0.001
 
 VISION = False
+
+relaunch_le = 15
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -34,6 +39,10 @@ def init_weights(m):
     if type(m) == torch.nn.Linear:
         torch.nn.init.normal_(m.weight, 0, 1e-4)
         m.bias.data.fill_(0.0)
+
+file_path = 'Best/bestlaptime.csv'
+best_lap_time = rwfile.RW.read_float_from_file(file_path)
+
 
 
 actor = ActorNetwork(state_size).to(device)
@@ -80,7 +89,7 @@ else:
 steps = 0
 for i in range(2000):
 
-    if np.mod(i, 5) == 0:
+    if np.mod(i, relaunch_le) == 0:
         ob, distFromStart = env.reset(relaunch = True)
     else:
         ob, distFromStart = env.reset()
@@ -114,8 +123,20 @@ for i in range(2000):
         a_t[0][1] = a_t_original[0][1] + noise_t[0][1]
         a_t[0][2] = a_t_original[0][2] + noise_t[0][2]
 
-        ob, distFromStart, r_t, done, info = env.step(a_t[0])
-
+        ob, distFromStart, r_t, done, info, end_type = env.step(a_t[0])
+        
+        ### LAST LAP TIME ###
+        if ob.lastLapTime > 0:
+            print("lap time is : ",ob.lastLapTime)
+            if (ob.lastLapTime < best_lap_time) and (train_indicator):
+                best_lap_time = ob.lastLapTime
+                rwfile.RW.write_float_to_file(file_path, best_lap_time)
+                print("Best Lap Time is updated.")
+                print("saving Best model")
+                torch.save(actor.state_dict(), 'Best/actormodel.pth')
+                torch.save(critic.state_dict(), 'Best/criticmodel.pth')
+                
+                
         s_t1 = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))
 
         #add to replay buffer
@@ -130,10 +151,8 @@ for i in range(2000):
         dones = np.asarray([e[4] for e in batch])
         y_t = torch.tensor(np.asarray([e[1] for e in batch]), device=device).float()
         
-        # Compute the target Q value
-        #print("before actor")
+        
         target_q_values1, target_q_values2 = target_critic(new_states, target_actor(new_states))
-        #print("after actor")
         target_q_values = torch.min(target_q_values1,target_q_values2)
         
         for k in range(len(batch)):

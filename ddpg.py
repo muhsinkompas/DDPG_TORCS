@@ -15,6 +15,8 @@ from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
 from OU import OU
 import timeit
+import rwfile
+import wOutputToCsv as w_Out
 
 OU = OU()       #Ornstein-Uhlenbeck Process
 
@@ -48,7 +50,18 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
     sess = tf.Session(config=config)
     from keras import backend as K
     K.set_session(sess)
+    
+    #----------------------------------------------------------------------------------------
+    r_w = rwfile.RW()
+    
+    file_path = 'Best/bestlaptime.csv'
+    best_lap_time = r_w.read_float_from_file(file_path)
+    print(best_lap_time)
+    w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv')
+    
 
+    #----------------------------------------------------------------------------------------
+    
     actor = ActorNetwork(sess, state_dim, action_dim, BATCH_SIZE, TAU, LRA)
     critic = CriticNetwork(sess, state_dim, action_dim, BATCH_SIZE, TAU, LRC)
     buff = ReplayBuffer(BUFFER_SIZE)    #Create replay buffer
@@ -100,8 +113,27 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
             a_t[0][1] = a_t_original[0][1] + noise_t[0][1]
             a_t[0][2] = a_t_original[0][2] + noise_t[0][2]
 
-            ob, r_t, done, info = env.step(a_t[0])
+            ob, r_t, done, info , end_type = env.step(a_t[0])
 
+            
+            ### LAST LAP TIME ###
+            if ob.lastLapTime > 0:
+                print("lap time is : ",ob.lastLapTime)
+                if (ob.lastLapTime < best_lap_time) and (train_indicator==1):
+                    best_lap_time = ob.lastLapTime
+                    r_w.write_float_to_file(file_path, best_lap_time)
+                    print("Now we save model")
+                    actor.model.save_weights("Best/actormodel.h5", overwrite=True)
+                    with open("Best/actormodel.json", "w") as outfile:
+                        json.dump(actor.model.to_json(), outfile)
+
+                    critic.model.save_weights("Best/criticmodel.h5", overwrite=True)
+                    with open("Best/criticmodel.json", "w") as outfile:
+                        json.dump(critic.model.to_json(), outfile)
+                    print("Best Lap Time is updated.")
+                    print("saving Best model")
+            ###
+            
             s_t1 = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))
         
             buff.add(s_t, a_t[0], r_t, s_t1, done)      #Add replay buffer
@@ -134,15 +166,27 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
             total_reward += r_t
             s_t = s_t1
         
-            print("Episode", i, "Step", step, "Action", a_t, "Reward", r_t, "Loss", loss)
-        
+            print("="*100)
+            print("--- Episode : {:<4}\tActions ".format(i)+ np.array2string(a_t, formatter={'float_kind': '{0:.3f}'.format})+"\tReward : {:8.4f}\tLoss : {:<8}".format(r_t,int(loss))+" ---")
+            print("="*100)
+            
+            #----------------------------------------------------------------------------------------------------------------
+            print(print("saving csv"))
+            output_csv = np.hstack((i, step, a_t[0], r_t, s_t, end_type, ob.focus, ob.curLapTime, best_lap_time, loss))
+            w_csv.append_numpy_array_to_csv(output_csv)
+            #----------------------------------------------------------------------------------------------------------------
+            
+            
             step += 1
             if done:
                 break
 
-        if np.mod(i, 3) == 0:
+        if np.mod(i, 4) == 0 or i==episode_count:
             if (train_indicator):
-                print("Now we save model")
+                #print(print("saving csv"))
+                #w_csv.append_numpy_array_to_csv(output_csv)
+                #output_csv = np.array(())
+                print("saving model")
                 actor.model.save_weights("actormodel.h5", overwrite=True)
                 with open("actormodel.json", "w") as outfile:
                     json.dump(actor.model.to_json(), outfile)

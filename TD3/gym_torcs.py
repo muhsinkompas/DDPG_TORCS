@@ -23,6 +23,8 @@ class TorcsEnv:
         self.gear_change = gear_change
 
         self.initial_run = True
+        self.oot_count = 0
+        self.no_prog_count = 0
 
         ##print("launch torcs")
         os.system('pkill torcs')
@@ -69,10 +71,10 @@ class TorcsEnv:
 
         # Apply Action
         action_torcs = client.R.d
-
+        
         # Steering
         action_torcs['steer'] = this_action['steer']  # in [-1, 1]
-
+        self.end_type = 0
         #  Simple Autnmatic Throttle Control by Snakeoil
         if self.throttle is False:
             target_speed = self.default_speed
@@ -142,29 +144,55 @@ class TorcsEnv:
 
         # collision detection
         if obs['damage'] - obs_pre['damage'] > 0:
-            reward = -1
+            reward += -100
             episode_terminate = True
             client.R.d['meta'] = True
+            self.end_type = 1
 
         # Termination judgement #########################
-        episode_terminate = False
         
         if (abs(track.any()) > 1 or abs(trackPos) > 1):  # Episode is terminated if the car is out of track
-            reward = -200
+            print("***"*10)
+            print("***"*10)
+            print("Out of track ")
+            print("***"*10)
+            print("***"*10)
+            #reward += -200*np.abs(np.sin(obs['angle']/2))
+            reward += -200*(1-np.exp(-np.abs(4*(obs['angle'])/np.pi)))
+            self.oot_count +=1
             episode_terminate = True
-            client.R.d['meta'] = True
+            if self.oot_count >4:
+                client.R.d['meta'] = True
+                self.end_type = 2
 
         if self.terminal_judge_start < self.time_step: # Episode terminates if the progress of agent is small
             if progress < self.termination_limit_progress:
+                print("***"*10)
+                print("***"*10)
                 print("No progress")
-                reward = -50
+                print("***"*10)
+                print("***"*10)
+                self.no_prog_count += 1
                 episode_terminate = True
-                client.R.d['meta'] = True
+                reward += (-40*self.no_prog_count)
+                if self.no_prog_count >4:
+                    client.R.d['meta'] = True
+                    self.end_type = 3
+                    
+        if episode_terminate == False:
+            self.oot_count -= 1
+            self.no_prog_count -= 1
+            if self.oot_count < 0:
+                self.oot_count = 0
+            if self.no_prog_count < 0:
+                self.no_prog_count = 0
 	    
         if np.cos(obs['angle']) < 0: # Episode is terminated if the agent runs backward
-            reward = -50
+            print("Wrong direction")
+            reward += -50
             episode_terminate = True
             client.R.d['meta'] = True
+            self.end_type = 4
         
         #print("################################################")
         #print(obs['lastLapTime'])
@@ -176,6 +204,7 @@ class TorcsEnv:
             reward = 100
             episode_terminate = True
             client.R.d['meta'] = True
+            self.end_type = 5
 
 
         if client.R.d['meta'] is True: # Send a reset signal
@@ -187,8 +216,6 @@ class TorcsEnv:
         return ob, distFromStart, reward, client.R.d['meta'], {}
 
     def reset(self, relaunch=False):
-        #print("Reset")
-
         self.time_step = 0
 
         if self.initial_reset is not True:
@@ -213,7 +240,7 @@ class TorcsEnv:
         self.last_u = None
 
         self.initial_reset = False
-        return self.get_obs()
+        return self.get_obs(), self.end_type
 
     def end(self):
         os.system('pkill torcs')
@@ -267,7 +294,9 @@ class TorcsEnv:
                      'track', 
                      'trackPos',
                      'wheelSpinVel',
-                     'lastLapTime']
+                     'distRaced',
+                     'lastLapTime',
+                     'curLapTime']
             Observation = col.namedtuple('Observaion', names)
             return Observation(focus=np.array(raw_obs['focus'], dtype=np.float32)/200.,
                                speedX=np.array(raw_obs['speedX'], dtype=np.float32)/300.0,
@@ -280,7 +309,9 @@ class TorcsEnv:
                                track=np.array(raw_obs['track'], dtype=np.float32)/200.,
                                trackPos=np.array(raw_obs['trackPos'], dtype=np.float32)/1.,
                                wheelSpinVel=np.array(raw_obs['wheelSpinVel'], dtype=np.float32),
-                               lastLapTime=np.array(raw_obs['lastLapTime'], dtype=np.float32)), raw_obs['distRaced']
+                               distRaced=np.array(raw_obs['distRaced'], dtype=np.float32),
+                               lastLapTime=np.array(raw_obs['lastLapTime'], dtype=np.float32),
+                               curLapTime=np.array(raw_obs['curLapTime'], dtype=np.float32)), raw_obs['distRaced']
         else:
             names = ['focus',
                      'speedX', 'speedY', 'speedZ', 'angle',
@@ -289,7 +320,10 @@ class TorcsEnv:
                      'track',
                      'trackPos',
                      'wheelSpinVel',
-                     'img']
+                     'img',
+                     'distRaced',
+                     'lastLapTime',
+                     'curLapTime']
             Observation = col.namedtuple('Observaion', names)
 
             # Get RGB from observation
@@ -304,4 +338,7 @@ class TorcsEnv:
                                track=np.array(raw_obs['track'], dtype=np.float32)/200.,
                                trackPos=np.array(raw_obs['trackPos'], dtype=np.float32)/1.,
                                wheelSpinVel=np.array(raw_obs['wheelSpinVel'], dtype=np.float32),
-                               img=image_rgb), raw_obs['distRaced']
+                               img=image_rgb,
+                               distRaced=np.array(raw_obs['distRaced'], dtype=np.float32),
+                               lastLapTime=np.array(raw_obs['lastLapTime'], dtype=np.float32),
+                               curLapTime=np.array(raw_obs['curLapTime'], dtype=np.float32)), raw_obs['distRaced']

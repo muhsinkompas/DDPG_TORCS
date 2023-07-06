@@ -1,0 +1,14 @@
+old/*
+*.pyc
+OutputCsv/*
+Best/*
+PPO/weights/*
+PPO/results/*
+PPO/old/*
+PPO/Best/*
+*pth
+TD3/results/*
+TD3/Best/*
+*__pycache__*
+*model.json
+*model.h5

@@ -320,8 +320,8 @@ class ServerState(object):
         u'''Specialty output for useful ServerState monitoring.'''
         out= unicode()
         sensors= [ # Select the ones you want in the order you want them.
-        #'curLapTime',
-        #'lastLapTime',
+        u'curLapTime',
+        u'lastLapTime',
         u'stucktimer',
         #'damage',
         #'focus',
