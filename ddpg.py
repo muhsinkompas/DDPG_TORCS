@@ -171,7 +171,7 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
             print("="*100)
             
             #----------------------------------------------------------------------------------------------------------------
-            print(print("saving csv"))
+            print("saving csv")
             output_csv = np.hstack((i, step, a_t[0], r_t, s_t, end_type, ob.focus, ob.curLapTime, best_lap_time, loss))
             w_csv.append_numpy_array_to_csv(output_csv)
             #----------------------------------------------------------------------------------------------------------------
