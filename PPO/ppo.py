@@ -48,7 +48,8 @@ class PPO(object):
         
         with tf.variable_scope('loss'):
             self.ratio = tf.exp(self.pi.log_prob(self.tfa) - self.oldpi.log_prob(self.tfa))
-
+            surr = self.ratio * self.tfadv
+            
             if self.METHOD['name'] == 'kl_pen':
                 kl = tf.distributions.kl_divergence(self.oldpi, self.pi)
                 self.kl_mean = tf.reduce_mean(kl)

@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 import gym
 from ppo import *
 from gym_torcs import TorcsEnv
-import rwfile
+import rwfile as rw
+import wOutputToCsv as w_Out
+import os
 
 #----------------------------------------------------------------------------------------
 
@@ -51,13 +53,16 @@ saver = tf.train.Saver()
 
 env = TorcsEnv(vision=False, throttle=True, gear_change=False)
 
-#----------------------------------------------------------------------------------------
+### ----------------------------------------------------------------------- ###
 
 file_path = 'Best/bestlaptime.csv'
-best_lap_time = rwfile.RW.read_float_from_file(file_path)
+r_w = rw.RW(file_path)
+best_lap_time = r_w.read_numpy_array_from_csv()
+print(best_lap_time)
+w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv')
+w_total_csv = w_Out.OW(csv_path = 'OutputCsv/output_total.csv')
 
-
-#----------------------------------------------------------------------------------------
+### ----------------------------------------------------------------------- ###
 
 if (train_test == 0 and irestart == 0):
     sess.run(tf.global_variables_initializer())
@@ -94,7 +99,7 @@ for ep in range(iter_num, EP_MAX):
             print("lap time is : ",ob.lastLapTime)
             if (ob.lastLapTime < best_lap_time) and (train_test==0):
                 best_lap_time = ob.lastLapTime
-                rwfile.RW.write_float_to_file(file_path, best_lap_time)
+                r_w.write_numpy_array_to_csv(best_lap_time)
                 saver.save(sess, "Best/model")
                 print("Best Lap Time is updated.")
                 print("saving Best model")
@@ -135,9 +140,32 @@ for ep in range(iter_num, EP_MAX):
         print("--- Episode : {:<4}\tActions ".format(ep)+ np.array2string(a, formatter={'float_kind': '{0:.3f}'.format})+"\tReward : {:8.4f}".format(ep_r)+" ---")
         print("="*100)
         
+        #----------------------------------------------------------------------------------------------------------------
+        # Saving outputs to csv file
+        #print("saving csv")
+        #### ADD LOSS HERE
+        output_csv = np.hstack((ep, t, a, r, s, end_type, ob.focus, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime))
+        w_csv.append_numpy_array_to_csv(np.matrix(output_csv))
+        #----------------------------------------------------------------------------------------------------------------
+        
         if (done  == True):
             break
         	
+    ### Saving total outputs for each episode --------------------------------------- ###
+    # EDIT HERE AFTER
+    output_total_csv = np.hstack((ep, t, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, ep_r))
+    w_total_csv.append_numpy_array_to_csv(output_total_csv)
+    ### ----------------------------------------------------------------------------- ###
+    
+    if np.mod(ep, 100) == 99:
+        if (train_test ==0):
+            file_name = 'Models/'+str(ep+1)
+            if os.path.isdir(file_name) ==False:
+                os.mkdir(file_name)
+            model_name = file_name+'/model'
+            print("saving model")
+            saver.save(sess, "weights/model")
+         
     if (train_test == 0 and ep%25 == 0):
         saver.save(sess, "weights/model")
 

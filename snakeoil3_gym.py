@@ -323,7 +323,7 @@ class ServerState(object):
         u'curLapTime',
         u'lastLapTime',
         u'stucktimer',
-        #'damage',
+        u'damage',
         #'focus',
         u'fuel',
         #'gear',

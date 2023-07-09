@@ -11,8 +11,9 @@ from ReplayBuffer import ReplayBuffer
 from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
 from OU import OU
-import rwfile
+import rwfile as rw
 import wOutputToCsv as w_Out
+import os
 
 state_size = 29
 action_size = 3
@@ -41,10 +42,16 @@ def init_weights(m):
         torch.nn.init.normal_(m.weight, 0, 1e-4)
         m.bias.data.fill_(0.0)
 
-file_path = 'Best/bestlaptime.csv'
-best_lap_time = rwfile.RW.read_float_from_file(file_path)
-w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv')
+### ----------------------------------------------------------------------- ###
 
+file_path = 'Best/bestlaptime.csv'
+r_w = rw.RW(file_path)
+best_lap_time = r_w.read_numpy_array_from_csv()
+print(best_lap_time)
+w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv')
+w_total_csv = w_Out.OW(csv_path = 'OutputCsv/output_total.csv')
+
+### ----------------------------------------------------------------------- ###
 
 actor = ActorNetwork(state_size).to(device)
 actor.apply(init_weights)
@@ -91,6 +98,7 @@ else:
 steps = 0
 for i in range(2000):
 
+    total_reward = 0
     if np.mod(i, relaunch_le) == 0:
         ob, distFromStart = env.reset(relaunch = True)
     else:
@@ -132,7 +140,7 @@ for i in range(2000):
             print("lap time is : ",ob.lastLapTime)
             if (ob.lastLapTime < best_lap_time) and (train_indicator):
                 best_lap_time = ob.lastLapTime
-                rwfile.RW.write_float_to_file(file_path, best_lap_time)
+                r_w.write_numpy_array_to_csv(best_lap_time)
                 print("Best Lap Time is updated.")
                 print("saving Best model")
                 torch.save(actor.state_dict(), 'Best/actormodel.pth')
@@ -209,6 +217,7 @@ for i in range(2000):
                 new_critic_state_dict[var_name] = TAU * critic.state_dict()[var_name] + (1-TAU) * target_critic.state_dict()[var_name]
             target_critic.load_state_dict(new_critic_state_dict)
         
+        total_reward += r_t
         s_t = s_t1
         steps +=1
         #print("---Episode ", i , "  Action:", a_t, "  Reward:", r_t, "  Loss:", int(loss))
@@ -221,9 +230,13 @@ for i in range(2000):
         
         #print("saving csv")
         #print(i, j, a_t[0], r_t, s_t, end_type, ob.focus, ob.curLapTime, best_lap_time, loss)
+        
+        #----------------------------------------------------------------------------------------------------------------
+        # Saving outputs to csv file
         #print("saving csv")
-        output_csv = np.hstack((i, j, a_t[0], r_t, s_t, end_type, ob.focus, ob.curLapTime, best_lap_time, int(loss)))
+        output_csv = np.hstack((i, j, a_t[0], r_t, s_t, end_type, ob.focus, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, int(loss)))
         w_csv.append_numpy_array_to_csv(np.matrix(output_csv))
+        #----------------------------------------------------------------------------------------------------------------
         
         #print(str(i) + " "+ str(steps) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
         
@@ -232,11 +245,29 @@ for i in range(2000):
             print("I'm dead")
             break
     #file_distances.write(str(i) + " "+ str(distFromStart) +"\n")
+    
+    ### Saving total outputs for each episode --------------------------------------- ###
+    # EDIT HERE AFTER
+    output_total_csv = np.hstack((i, j, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, total_reward))
+    w_total_csv.append_numpy_array_to_csv(output_total_csv)
+    ### ----------------------------------------------------------------------------- ###
+    
     if np.mod(i, 3) == 0:
         if (train_indicator):
             print("saving model")
             torch.save(actor.state_dict(), 'actormodel.pth')
             torch.save(critic.state_dict(), 'criticmodel.pth')
+    
+    if np.mod(i, 100) == 99:
+        if (train_indicator):
+            file_name = 'Models/'+str(i+1)
+            if os.path.isdir(file_name) ==False:
+                os.mkdir(file_name)
+            actor_name = file_name+'/actormodel.pth'
+            critic_model = file_name+'/criticmodel.pth'
+            print("saving model")
+            torch.save(actor.state_dict(), actor_name)
+            torch.save(critic.state_dict(), critic_model)
 
 #file_reward.close()   
 #file_distances.close()

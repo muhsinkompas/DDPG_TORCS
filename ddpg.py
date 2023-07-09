@@ -17,6 +17,8 @@ from OU import OU
 import timeit
 import rwfile
 import wOutputToCsv as w_Out
+import os
+
 
 OU = OU()       #Ornstein-Uhlenbeck Process
 
@@ -52,12 +54,13 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
     K.set_session(sess)
     
     #----------------------------------------------------------------------------------------
-    r_w = rwfile.RW()
-    
     file_path = 'Best/bestlaptime.csv'
-    best_lap_time = r_w.read_float_from_file(file_path)
+    r_w = rwfile.RW(file_path)
+    best_lap_time = r_w.read_numpy_array_from_csv()
     print(best_lap_time)
+    
     w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv')
+    w_total_csv = w_Out.OW(csv_path = 'OutputCsv/output_total.csv')
     
 
     #----------------------------------------------------------------------------------------
@@ -116,12 +119,12 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
             ob, r_t, done, info , end_type = env.step(a_t[0])
 
             
-            ### LAST LAP TIME ###
+            ### LAST LAP TIME & saving best model----------------------------------------###
             if ob.lastLapTime > 0:
                 print("lap time is : ",ob.lastLapTime)
                 if (ob.lastLapTime < best_lap_time) and (train_indicator==1):
                     best_lap_time = ob.lastLapTime
-                    r_w.write_float_to_file(file_path, best_lap_time)
+                    r_w.write_numpy_array_to_csv(best_lap_time)
                     print("Now we save model")
                     actor.model.save_weights("Best/actormodel.h5", overwrite=True)
                     with open("Best/actormodel.json", "w") as outfile:
@@ -132,7 +135,7 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
                         json.dump(critic.model.to_json(), outfile)
                     print("Best Lap Time is updated.")
                     print("saving Best model")
-            ###
+            ###------------------------------------------------------------------------###
             
             s_t1 = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))
         
@@ -171,8 +174,9 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
             print("="*100)
             
             #----------------------------------------------------------------------------------------------------------------
+            # Saving outputs to csv file
             print("saving csv")
-            output_csv = np.hstack((i, step, a_t[0], r_t, s_t, end_type, ob.focus, ob.curLapTime, best_lap_time, loss))
+            output_csv = np.hstack((i, j, a_t[0], r_t, s_t, end_type, ob.focus, ob.distRaced, ob.distFromStart , ob.curLapTime, ob.lastLapTime, loss))
             w_csv.append_numpy_array_to_csv(output_csv)
             #----------------------------------------------------------------------------------------------------------------
             
@@ -183,9 +187,6 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
 
         if np.mod(i, 4) == 0 or i==episode_count:
             if (train_indicator):
-                #print(print("saving csv"))
-                #w_csv.append_numpy_array_to_csv(output_csv)
-                #output_csv = np.array(())
                 print("saving model")
                 actor.model.save_weights("actormodel.h5", overwrite=True)
                 with open("actormodel.json", "w") as outfile:
@@ -194,7 +195,34 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
                 critic.model.save_weights("criticmodel.h5", overwrite=True)
                 with open("criticmodel.json", "w") as outfile:
                     json.dump(critic.model.to_json(), outfile)
+                    
+        ### Saving models each 100 episodes --------------------------------------------- ###         
+        if np.mod(i,100)==99:
+            if (train_indicator):
+                print("saving model ")
+                file_name = str(i+1)
+                file_name = "Models/"+file_name
+                if os.path.isdir(file_name)==False:
+                    os.makedirs(file_name)
+                actor_name = file_name+"/actormodel.h5"
+                t_actor_name = file_name+"/actormodel.json"
+                critic_model = file_name+"/criticmodel.h5"
+                t_critic_model = file_name+"/criticmodel.json"
+                actor.model.save_weights(actor_name, overwrite=True)
+                with open(t_actor_name, "w") as outfile:
+                    json.dump(actor.model.to_json(), outfile)
 
+                critic.model.save_weights(critic_model, overwrite=True)
+                with open(t_critic_model, "w") as outfile:
+                    json.dump(critic.model.to_json(), outfile)
+        ### ----------------------------------------------------------------------------- ###
+        
+        ### Saving total outputs for each episode --------------------------------------- ###
+        # EDIT HERE AFTER
+        output_total_csv = np.hstack((i, j, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, total_reward))
+        w_total_csv.append_numpy_array_to_csv(output_total_csv)
+        ### ----------------------------------------------------------------------------- ###
+        
         print("TOTAL REWARD @ " + str(i) +"-th Episode  : Reward " + str(total_reward))
         print("Total Step: " + str(step))
         print("")
@@ -203,4 +231,4 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
     print("Finish.")
 
 if __name__ == "__main__":
-    playGame()
+    playGame(train_indicator=1)

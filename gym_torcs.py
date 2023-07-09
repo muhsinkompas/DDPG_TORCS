@@ -292,7 +292,8 @@ class TorcsEnv:
                      'wheelSpinVel',
                      'distRaced',
                      'lastLapTime',
-                     'curLapTime']
+                     'curLapTime',
+                     'distFromStart']
             Observation = col.namedtuple('Observaion', names)
             return Observation(focus=np.array(raw_obs['focus'], dtype=np.float32)/200.,
                                speedX=np.array(raw_obs['speedX'], dtype=np.float32)/300.0,
@@ -307,7 +308,8 @@ class TorcsEnv:
                                wheelSpinVel=np.array(raw_obs['wheelSpinVel'], dtype=np.float32),
                                distRaced=np.array(raw_obs['distRaced'], dtype=np.float32),
                                lastLapTime=np.array(raw_obs['lastLapTime'], dtype=np.float32),
-                               curLapTime=np.array(raw_obs['curLapTime'], dtype=np.float32))
+                               curLapTime=np.array(raw_obs['curLapTime'], dtype=np.float32),
+                               distFromStart=np.array(raw_obs['distFromStart'], dtype=np.float32))
         else:
             names = ['focus',
                      'speedX', 'speedY', 'speedZ', 'angle',
@@ -319,7 +321,8 @@ class TorcsEnv:
                      'img',
                      'distRaced',
                      'lastLapTime',
-                     'curLapTime']
+                     'curLapTime',
+                     'distFromStart']
             Observation = col.namedtuple('Observaion', names)
 
             # Get RGB from observation
@@ -337,4 +340,5 @@ class TorcsEnv:
                                img=image_rgb,
                                distRaced=np.array(raw_obs['distRaced'], dtype=np.float32),
                                lastLapTime=np.array(raw_obs['lastLapTime'], dtype=np.float32),
-                               curLapTime=np.array(raw_obs['curLapTime'], dtype=np.float32))
+                               curLapTime=np.array(raw_obs['curLapTime'], dtype=np.float32),
+                               distFromStart=np.array(raw_obs['distFromStart'], dtype=np.float32))
