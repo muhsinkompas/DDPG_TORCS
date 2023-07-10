@@ -249,7 +249,7 @@ for i in range(2000):
     ### Saving total outputs for each episode --------------------------------------- ###
     # EDIT HERE AFTER
     output_total_csv = np.hstack((i, j, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, total_reward))
-    w_total_csv.append_numpy_array_to_csv(output_total_csv)
+    w_total_csv.append_numpy_array_to_csv(np.matrix(output_total_csv))
     ### ----------------------------------------------------------------------------- ###
     
     if np.mod(i, 3) == 0:

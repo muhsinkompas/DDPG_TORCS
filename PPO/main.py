@@ -14,19 +14,19 @@ import os
 
 EP_MAX = 2000
 EP_LEN = 1000
-GAMMA = 0.99
+GAMMA = 0.95
 
 
-A_LR = 1*1e-4
-C_LR = 1*1e-3
+A_LR = 3*1e-4
+C_LR = 3*1e-4
 
-BATCH = 32 
+BATCH = 64
 A_UPDATE_STEPS = 10
 C_UPDATE_STEPS = 10
 S_DIM, A_DIM = 29, 3
 METHOD = [
     dict(name='kl_pen', kl_target=0.01, lam=1.0),   # KL penalty; lam is actually beta from the PPO paper
-    dict(name='clip', epsilon=0.10),           # Clipped surrogate objective, find this is better
+    dict(name='clip', epsilon=0.20),           # Clipped surrogate objective, find this is better
 ][1]        # choose the method for optimization
 #old eps =0.1
 
@@ -134,7 +134,7 @@ for ep in range(iter_num, EP_MAX):
                 #print("ppo update")              
                 ppo.update(bs, ba, br)
                 
-        print('Ep: %i' % ep,"|Ep_r: %i" % ep_r,("|Lam: %.4f" % METHOD['lam']) if METHOD['name'] == 'kl_pen' else '',)
+        #print('Ep: %i' % ep,"|Ep_r: %i" % ep_r,("|Lam: %.4f" % METHOD['lam']) if METHOD['name'] == 'kl_pen' else '',)
         
         print("="*100)
         print("--- Episode : {:<4}\tActions ".format(ep)+ np.array2string(a, formatter={'float_kind': '{0:.3f}'.format})+"\tReward : {:8.4f}".format(ep_r)+" ---")
@@ -154,7 +154,7 @@ for ep in range(iter_num, EP_MAX):
     ### Saving total outputs for each episode --------------------------------------- ###
     # EDIT HERE AFTER
     output_total_csv = np.hstack((ep, t, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, ep_r))
-    w_total_csv.append_numpy_array_to_csv(output_total_csv)
+    w_total_csv.append_numpy_array_to_csv(np.matrix(output_total_csv))
     ### ----------------------------------------------------------------------------- ###
     
     if np.mod(ep, 100) == 99:
