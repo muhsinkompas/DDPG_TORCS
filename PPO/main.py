@@ -164,7 +164,7 @@ for ep in range(iter_num, EP_MAX):
                 os.mkdir(file_name)
             model_name = file_name+'/model'
             print("saving model")
-            saver.save(sess, "weights/model")
+            saver.save(sess, model_name)
          
     if (train_test == 0 and ep%25 == 0):
         saver.save(sess, "weights/model")
