@@ -17,8 +17,8 @@ EP_LEN = 1000
 GAMMA = 0.95
 
 
-A_LR = 3*1e-4
-C_LR = 3*1e-4
+A_LR = 1*1e-4
+C_LR = 1*1e-4
 
 BATCH = 64
 A_UPDATE_STEPS = 10
