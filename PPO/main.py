@@ -20,13 +20,13 @@ GAMMA = 0.95
 A_LR = 1*1e-4
 C_LR = 1*1e-4
 
-BATCH = 64
+BATCH = 32
 A_UPDATE_STEPS = 10
 C_UPDATE_STEPS = 10
 S_DIM, A_DIM = 29, 3
 METHOD = [
     dict(name='kl_pen', kl_target=0.01, lam=1.0),   # KL penalty; lam is actually beta from the PPO paper
-    dict(name='clip', epsilon=0.20),           # Clipped surrogate objective, find this is better
+    dict(name='clip', epsilon=0.15),           # Clipped surrogate objective, find this is better
 ][1]        # choose the method for optimization
 #old eps =0.1
 
@@ -111,13 +111,13 @@ for ep in range(iter_num, EP_MAX):
             buffer_r.append(r)    
         s = s_
         ep_r += r
-        if (train_test == 0):
-            with open("results/results_ppo0.txt", "a") as myfile:
-                myfile.write(str(ep) + " " + str(t) + " " + str(r) +" " +  str(r) + " " + str(a[0]) +" " + str(a[1]) +" " + str(a[2]) + " "+ str(ob.distRaced)+str("\n"))
+        # if (train_test == 0):
+        #     with open("results/results_ppo0.txt", "a") as myfile:
+        #         myfile.write(str(ep) + " " + str(t) + " " + str(r) +" " +  str(r) + " " + str(a[0]) +" " + str(a[1]) +" " + str(a[2]) + " "+ str(ob.distRaced)+str("\n"))
         
         if (train_test == 0):
-            with open("results/states_ppo0.txt", "a") as file_states:
-                file_states.write(str(ep) + " "+ str(t) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
+            #with open("results/states_ppo0.txt", "a") as file_states:
+            #    file_states.write(str(ep) + " "+ str(t) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
 
             if (t+1) % BATCH == 0 or t == EP_LEN-1 or done == True:
                 v_s_ = ppo.get_v(s_)
