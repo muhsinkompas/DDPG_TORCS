@@ -1,6 +1,8 @@
 old/*
 *.pyc
 
+simply_PPO.py
+
 !Best/
 Best/*
 !TD3/Best/

@@ -56,17 +56,20 @@ class PPO(object):
                 self.aloss = -(tf.reduce_mean(surr - self.tflam * kl))
 
             else:   # clipping method
-                self.clipped_ratio = tf.clip_by_value(self.ratio, 1.-self.METHOD['epsilon'], 1.+self.METHOD['epsilon'])
-                self.aloss = -tf.reduce_mean(tf.minimum(self.ratio*self.tfadv, self.clipped_ratio*self.tfadv))
-
+                #self.clipped_ratio = tf.clip_by_value(self.ratio, 1.-self.METHOD['epsilon'], 1.+self.METHOD['epsilon'])
+                #self.aloss = -tf.reduce_mean(tf.minimum(self.ratio*self.tfadv, self.clipped_ratio*self.tfadv))
+                self.aloss = -tf.reduce_mean(tf.minimum(surr, tf.clip_by_value(self.ratio, 1.-METHOD['epsilon'], 1.+METHOD['epsilon'])*self.tfadv))
+                
                 # entropy loss
-                entropy = -tf.reduce_sum(self.pi.prob(self.tfa) * tf.log(tf.clip_by_value(self.pi.prob(self.tfa),1e-10,1.0)),axis=1)
-                entropy = tf.reduce_mean(entropy,axis=0)    
-                self.aloss -= 0.001 * entropy
+                #entropy = -tf.reduce_sum(self.pi.prob(self.tfa) * tf.log(tf.clip_by_value(self.pi.prob(self.tfa),1e-10,1.0)),axis=1)
+                #entropy = tf.reduce_mean(entropy,axis=0)    
+                #self.aloss -= 0.001 * entropy
 
 
         with tf.variable_scope('atrain'):
             self.atrain_op = tf.train.AdamOptimizer(self.A_LR).minimize(self.aloss)
+        
+        self.sess.run(tf.global_variables_initializer())
 
    
     def screen_out(self, s, a, r):
