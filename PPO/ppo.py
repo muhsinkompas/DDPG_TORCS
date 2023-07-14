@@ -64,6 +64,7 @@ class PPO(object):
                 #entropy = -tf.reduce_sum(self.pi.prob(self.tfa) * tf.log(tf.clip_by_value(self.pi.prob(self.tfa),1e-10,1.0)),axis=1)
                 #entropy = tf.reduce_mean(entropy,axis=0)    
                 #self.aloss -= 0.001 * entropy
+            print(self.aloss)
 
 
         with tf.variable_scope('atrain'):
@@ -101,7 +102,7 @@ class PPO(object):
 
             elif kl > self.METHOD['kl_target'] * 1.5:
                 self.METHOD['lam'] *= 2
-            self.METHOD['lam'] = np.clip(self.METHOD['lam'], 1e-4, 10)    # sometimes explode
+            self.METHOD['lam'] = np.clip(self.METHOD['lam'], 1e-5, 10)    # sometimes explode
 
         else:   # clipping method
             for _ in range(self.A_UPDATE_STEPS):
