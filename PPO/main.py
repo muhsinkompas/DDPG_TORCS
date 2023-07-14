@@ -1,7 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib
-matplotlib.use('agg')
+#matplotlib.use('agg')
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import gym
 from ppo import *
@@ -18,7 +19,7 @@ GAMMA = 0.95
 
 
 A_LR = 1*1e-4
-C_LR = 1*1e-4
+C_LR = 1*1e-3
 
 BATCH = 64
 A_UPDATE_STEPS = 10
@@ -182,14 +183,14 @@ for ep in range(iter_num, EP_MAX):
          
     if (train_test == 0 and ep+1%5 == 0):
         saver.save(sess, "weights/model")
-        # print("##############################################################\n##########################################")
-        # print("##############################################################\n##########################################")
-        # print("##############################################################\n##########################################")
-        # plt.plot(steps, actor_losses, label="Actor Loss")
-        # plt.plot(steps, critic_losses, label="Critic Loss")
-        # plt.xlabel("Training Step")
-        # plt.ylabel("Loss")
-        # plt.title("Loss During Training")
-        # plt.legend()
-        # plt.show()
+        print("##############################################################\n##########################################")
+        print("##############################################################\n##########################################")
+        print("##############################################################\n##########################################")
+        plt.plot(steps, actor_losses, label="Actor Loss")
+        plt.plot(steps, critic_losses, label="Critic Loss")
+        plt.xlabel("Training Step")
+        plt.ylabel("Loss")
+        plt.title("Loss During Training")
+        plt.legend()
+        plt.show()
 
