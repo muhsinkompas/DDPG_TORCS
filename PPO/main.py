@@ -148,7 +148,7 @@ for ep in range(iter_num, EP_MAX):
         print("="*100)
         print("--- Episode : {:<4}\tActions ".format(ep)+ np.array2string(a, formatter={'float_kind': '{0:.3f}'.format})+"\tReward : {:8.4f}".format(ep_r)+" ---")
         print("="*100)
-        print("Actor Loss: "+actor_loss+ "\tCrit Loss: "+ crit_loss)
+        print("Actor Loss: "+str(actor_loss)+ "\tCrit Loss: "+ str(crit_loss))
         
         #----------------------------------------------------------------------------------------------------------------
         # Saving outputs to csv file

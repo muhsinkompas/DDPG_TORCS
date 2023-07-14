@@ -3,35 +3,38 @@ old/*
 
 simply_PPO.py
 
-!Best/
+!Best
 Best/*
-!TD3/Best/
+!TD3/Best
 TD3/Best/*
-!PPO/Best/
+!PPO/Best
 PPO/Best/*
 
-!OutputCsv/
+!OutputCsv
 OutputCsv/*
-!TD3/OutputCsv/
+!TD3/OutputCsv
 TD3/OutputCsv/*
-!PPO/OutputCsv/
+!PPO/OutputCsv
 PPO/OutputCsv/*
 
-!Models/
+!Models
 Models/*
-!TD3/Models/
+!TD3/Models
 TD3/Models/*
-!PPO/Models/
+!PPO/Models
 PPO/Models/*
 
-!PPO/weights/
-!PPO/results/
+!PPO/weights
+!PPO/results
 PPO/weights/*
 PPO/results/*
 PPO/old/*
 *pth
-!TD3/results/
+!TD3/results
 TD3/results/*
 *__pycache__*
 *model.json
 *model.h5
+
+PPO/__pycache__
+TD3/__pycache__
