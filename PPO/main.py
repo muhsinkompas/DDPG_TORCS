@@ -26,7 +26,7 @@ C_UPDATE_STEPS = 10
 S_DIM, A_DIM = 29, 3
 METHOD = [
     dict(name='kl_pen', kl_target=0.01, lam=1.0),   # KL penalty; lam is actually beta from the PPO paper
-    dict(name='clip', epsilon=0.15),           # Clipped surrogate objective, find this is better
+    dict(name='clip', epsilon=0.20),           # Clipped surrogate objective, find this is better
 ][1]        # choose the method for optimization
 #old eps =0.1
 
@@ -61,6 +61,13 @@ best_lap_time = r_w.read_numpy_array_from_csv()
 print(best_lap_time)
 w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv')
 w_total_csv = w_Out.OW(csv_path = 'OutputCsv/output_total.csv')
+
+### ----------------------------------------------------------------------- ###
+
+actor_losses = []
+critic_losses = []
+steps = []
+actor_loss, crit_loss = [0.0 , 0.0]
 
 ### ----------------------------------------------------------------------- ###
 
@@ -131,14 +138,17 @@ for ep in range(iter_num, EP_MAX):
                 br = np.array(discounted_r)[:, np.newaxis]
                 buffer_s, buffer_a, buffer_r = [], [], []
 
-                #print("ppo update")              
-                ppo.update(bs, ba, br)
+                print("ppo update")              
+                actor_loss, crit_loss = ppo.update(bs, ba, br)
+                #print("22")
+                #print(actor_loss, crit_loss)
                 
         #print('Ep: %i' % ep,"|Ep_r: %i" % ep_r,("|Lam: %.4f" % METHOD['lam']) if METHOD['name'] == 'kl_pen' else '',)
         
         print("="*100)
         print("--- Episode : {:<4}\tActions ".format(ep)+ np.array2string(a, formatter={'float_kind': '{0:.3f}'.format})+"\tReward : {:8.4f}".format(ep_r)+" ---")
         print("="*100)
+        print("Actor Loss: "+actor_loss+ "\tCrit Loss: "+ crit_loss)
         
         #----------------------------------------------------------------------------------------------------------------
         # Saving outputs to csv file
@@ -151,6 +161,10 @@ for ep in range(iter_num, EP_MAX):
         if (done  == True):
             break
         	
+         
+    actor_losses.append(actor_loss)
+    critic_losses.append(crit_loss)
+    steps.append(ep)
     ### Saving total outputs for each episode --------------------------------------- ###
     # EDIT HERE AFTER
     output_total_csv = np.hstack((ep, t, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, ep_r))
@@ -166,6 +180,16 @@ for ep in range(iter_num, EP_MAX):
             print("saving model")
             saver.save(sess, model_name)
          
-    if (train_test == 0 and ep%25 == 0):
+    if (train_test == 0 and ep+1%5 == 0):
         saver.save(sess, "weights/model")
+        # print("##############################################################\n##########################################")
+        # print("##############################################################\n##########################################")
+        # print("##############################################################\n##########################################")
+        # plt.plot(steps, actor_losses, label="Actor Loss")
+        # plt.plot(steps, critic_losses, label="Critic Loss")
+        # plt.xlabel("Training Step")
+        # plt.ylabel("Loss")
+        # plt.title("Loss During Training")
+        # plt.legend()
+        # plt.show()
 

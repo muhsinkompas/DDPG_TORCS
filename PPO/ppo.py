@@ -106,11 +106,23 @@ class PPO(object):
 
         else:   # clipping method
             for _ in range(self.A_UPDATE_STEPS):
-               self.sess.run(self.atrain_op, feed_dict={self.tfs: s, self.tfa: a, self.tfadv: adv})
+                _,loss = self.sess.run(
+                    [self.atrain_op, self.aloss], 
+                    feed_dict={self.tfs: s, self.tfa: a, self.tfadv: adv}
+                )
+                actor_loss = loss
                  
         # update critic
         for _ in range(self.C_UPDATE_STEPS):
-           self.sess.run(self.ctrain_op, {self.tfs: s, self.tfdc_r: r}) 
+            _,loss = self.sess.run(
+                [self.ctrain_op, self.closs], 
+                {self.tfs: s, self.tfdc_r: r}
+            ) 
+            crit_loss = loss
+        
+        #actor_loss = self.aloss
+        #crit_loss = self.closs
+        return actor_loss, crit_loss
      
 
     def choose_action(self, s):
