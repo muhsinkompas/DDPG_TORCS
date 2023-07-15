@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # Example usage
     array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     csv_path = 'OutputCsv/data.csv'
-    my_class = RW(csv_path)
+    my_class = OW(csv_path)
 
     my_class.write_numpy_array_to_csv(array)
 
