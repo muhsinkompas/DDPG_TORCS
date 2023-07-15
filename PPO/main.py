@@ -18,8 +18,8 @@ EP_LEN = 1000
 GAMMA = 0.95
 
 
-A_LR = 1*1e-4
-C_LR = 1*1e-3
+A_LR = 1*1e-5
+C_LR = 1*1e-5
 
 BATCH = 64
 A_UPDATE_STEPS = 10
@@ -168,7 +168,7 @@ for ep in range(iter_num, EP_MAX):
     steps.append(ep)
     ### Saving total outputs for each episode --------------------------------------- ###
     # EDIT HERE AFTER
-    output_total_csv = np.hstack((ep, t, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, ep_r))
+    output_total_csv = np.hstack((ep, t, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, ep_r, actor_loss, crit_loss))
     w_total_csv.append_numpy_array_to_csv(np.matrix(output_total_csv))
     ### ----------------------------------------------------------------------------- ###
     
@@ -181,16 +181,16 @@ for ep in range(iter_num, EP_MAX):
             print("saving model")
             saver.save(sess, model_name)
          
-    if (train_test == 0 and ep+1%5 == 0):
+    if (train_test == 0 and (ep+1)%25 == 0):
         saver.save(sess, "weights/model")
-        print("##############################################################\n##########################################")
-        print("##############################################################\n##########################################")
-        print("##############################################################\n##########################################")
-        plt.plot(steps, actor_losses, label="Actor Loss")
-        plt.plot(steps, critic_losses, label="Critic Loss")
-        plt.xlabel("Training Step")
-        plt.ylabel("Loss")
-        plt.title("Loss During Training")
-        plt.legend()
-        plt.show()
+        # print("##############################################################\n##########################################")
+        # print("##############################################################\n##########################################")
+        # print("##############################################################\n##########################################")
+        # plt.plot(steps, actor_losses, label="Actor Loss")
+        # plt.plot(steps, critic_losses, label="Critic Loss")
+        # plt.xlabel("Training Step")
+        # plt.ylabel("Loss")
+        # plt.title("Loss During Training")
+        # plt.legend()
+        # plt.show()
 
