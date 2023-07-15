@@ -138,7 +138,7 @@ class TorcsEnv:
         rpm = np.array(obs['rpm'])
 
 
-
+        # sp is car speed. angle is angle between car and track line. trackPos is distance between middle of the line.
         progress = sp*np.cos(obs['angle']) - np.abs(sp*np.sin(obs['angle'])) - sp * np.abs(obs['trackPos'])
         reward = progress
         episode_terminate = False
@@ -146,10 +146,11 @@ class TorcsEnv:
         
         # collision detection
         if obs['damage'] - obs_pre['damage'] > 0:
+            print("Car was damaged !!!")
             reward += -100
-            episode_terminate = True
-            client.R.d['meta'] = True
-            self.end_type = 1
+            #episode_terminate = True
+            #client.R.d['meta'] = True
+            #self.end_type = 1
 
         # Termination judgement #########################
         

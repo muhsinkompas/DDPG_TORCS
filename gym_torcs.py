@@ -143,10 +143,11 @@ class TorcsEnv:
         
         # collision detection
         if obs['damage'] - obs_pre['damage'] > 0:
+            print("Car was damaged !!!")
             reward += -100
-            episode_terminate = True
-            client.R.d['meta'] = True
-            self.end_type = 1
+            #episode_terminate = True
+            #client.R.d['meta'] = True
+            #self.end_type = 1
 
         # Termination judgement #########################
         
