@@ -18,8 +18,8 @@ EP_LEN = 1000
 GAMMA = 0.95
 
 
-A_LR = 1*1e-5
-C_LR = 1*1e-5
+A_LR = 1*1e-4
+C_LR = 1*1e-4
 
 BATCH = 64
 A_UPDATE_STEPS = 10
@@ -27,7 +27,7 @@ C_UPDATE_STEPS = 10
 S_DIM, A_DIM = 29, 3
 METHOD = [
     dict(name='kl_pen', kl_target=0.01, lam=1.0),   # KL penalty; lam is actually beta from the PPO paper
-    dict(name='clip', epsilon=0.20),           # Clipped surrogate objective, find this is better
+    dict(name='clip', epsilon=0.15),           # Clipped surrogate objective, find this is better
 ][1]        # choose the method for optimization
 #old eps =0.1
 
