@@ -178,13 +178,13 @@ class TorcsEnv:
                 self.no_prog_count += 1
                 episode_terminate = True
                 reward += (-40*self.no_prog_count)
-                if self.no_prog_count >4:
+                if self.no_prog_count >9:
                     client.R.d['meta'] = True
                     self.end_type = 3
                     
         if episode_terminate == False:
-            self.oot_count += -1
-            self.no_prog_count += -1
+            self.oot_count += -2
+            self.no_prog_count += -2
             if self.oot_count < 0:
                 self.oot_count = 0
             if self.no_prog_count < 0:
@@ -215,8 +215,8 @@ class TorcsEnv:
             client.respond_to_server()
 
         self.time_step += 1
-
-        return self.get_obs(), reward, client.R.d['meta'], {}, self.end_type
+        normalized_reward = (reward - 76.9) / 46.4
+        return self.get_obs(), normalized_reward, client.R.d['meta'], {}, self.end_type
 
     def reset(self, relaunch=False):
         self.time_step = 0

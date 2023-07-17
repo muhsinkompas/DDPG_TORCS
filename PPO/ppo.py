@@ -61,9 +61,9 @@ class PPO(object):
                 self.aloss = -tf.reduce_mean(tf.minimum(surr, tf.clip_by_value(self.ratio, 1.-METHOD['epsilon'], 1.+METHOD['epsilon'])*self.tfadv))
                 
                 # entropy loss
-                #entropy = -tf.reduce_sum(self.pi.prob(self.tfa) * tf.log(tf.clip_by_value(self.pi.prob(self.tfa),1e-10,1.0)),axis=1)
-                #entropy = tf.reduce_mean(entropy,axis=0)    
-                #self.aloss -= 0.001 * entropy
+                entropy = -tf.reduce_sum(self.pi.prob(self.tfa) * tf.log(tf.clip_by_value(self.pi.prob(self.tfa),1e-10,1.0)),axis=1)
+                entropy = tf.reduce_mean(entropy,axis=0)    
+                self.aloss -= 0.00001 * entropy
             print(self.aloss)
 
 
