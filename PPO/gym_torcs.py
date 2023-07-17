@@ -177,7 +177,7 @@ class TorcsEnv:
                 print("***"*10)
                 self.no_prog_count += 1
                 episode_terminate = True
-                reward += (-4*self.no_prog_count)
+                reward += (-1*self.no_prog_count)
                 if self.no_prog_count >9:
                     client.R.d['meta'] = True
                     self.end_type = 3
