@@ -12,7 +12,7 @@ import sys
 
 
 class TorcsEnv:
-    terminal_judge_start = 100 #1000  # If after 100 timestep still no progress, terminated
+    terminal_judge_start = 50 #1000  # If after 100 timestep still no progress, terminated
     termination_limit_progress = 5  # [km/h], episode terminates if car is running slower than this limit
     default_speed = 50 
     
@@ -136,7 +136,7 @@ class TorcsEnv:
         # direction-dependent positive reward
         track = np.array(obs['track'])
         trackPos = np.array(obs['trackPos'])
-        sp = np.array(obs['speedX'])
+        sp = np.array(obs['speedX'])/200
         damage = np.array(obs['damage'])
         rpm = np.array(obs['rpm'])
         
@@ -147,7 +147,7 @@ class TorcsEnv:
         # collision detection
         if obs['damage'] - obs_pre['damage'] > 0:
             print("Car was damaged !!!")
-            reward += -100
+            reward += -(1+sp)
             #episode_terminate = True
             #client.R.d['meta'] = True
             #self.end_type = 1
@@ -161,10 +161,10 @@ class TorcsEnv:
             print("***"*10)
             print("***"*10)
             #reward += -200*np.abs(np.sin(obs['angle']/2)) #out of track penalty
-            reward += -200*(1-np.exp(-np.abs(4*(obs['angle'])/np.pi)))
+            reward += -(1-np.exp(-np.abs(8*(obs['angle'])/np.pi)))
             episode_terminate = True
             self.oot_count +=1
-            if self.oot_count >4:
+            if self.oot_count >9:
                 client.R.d['meta'] = True
                 self.end_type = 2
 
@@ -177,7 +177,7 @@ class TorcsEnv:
                 print("***"*10)
                 self.no_prog_count += 1
                 episode_terminate = True
-                reward += (-40*self.no_prog_count)
+                reward += (-4*self.no_prog_count)
                 if self.no_prog_count >9:
                     client.R.d['meta'] = True
                     self.end_type = 3
@@ -192,7 +192,7 @@ class TorcsEnv:
 
 
         if np.cos(obs['angle']) < 0: # Episode is terminated if the agent runs backward
-            reward += -50
+            reward += -10
             print("Wrong direction")
             episode_terminate = True
             client.R.d['meta'] = True
@@ -205,7 +205,7 @@ class TorcsEnv:
         
         if obs['lastLapTime'] > 0:
             print("...LAP FINISHED...")
-            reward = 100
+            reward = 10
             episode_terminate = True
             client.R.d['meta'] = True
             self.end_type = 5
@@ -215,8 +215,8 @@ class TorcsEnv:
             client.respond_to_server()
 
         self.time_step += 1
-        normalized_reward = (reward - 76.9) / 46.4
-        return self.get_obs(), normalized_reward, client.R.d['meta'], {}, self.end_type
+        #normalized_reward = (reward - 76.9) / 46.4
+        return self.get_obs(), reward, client.R.d['meta'], {}, self.end_type
 
     def reset(self, relaunch=False):
         self.time_step = 0
