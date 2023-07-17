@@ -13,7 +13,8 @@ import sys
 
 class TorcsEnv:
     terminal_judge_start = 50 #1000  # If after 100 timestep still no progress, terminated
-    termination_limit_progress = 5  # [km/h], episode terminates if car is running slower than this limit
+    speed_ratio = 100
+    termination_limit_progress = 5/speed_ratio  # [km/h], episode terminates if car is running slower than this limit
     default_speed = 50 
     
     initial_reset = True
@@ -136,7 +137,7 @@ class TorcsEnv:
         # direction-dependent positive reward
         track = np.array(obs['track'])
         trackPos = np.array(obs['trackPos'])
-        sp = np.array(obs['speedX'])/200
+        sp = np.array(obs['speedX'])/self.speed_ratio
         damage = np.array(obs['damage'])
         rpm = np.array(obs['rpm'])
         
