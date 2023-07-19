@@ -12,7 +12,7 @@ import sys
 
 
 class TorcsEnv:
-    terminal_judge_start = 50 #1000  # If after 100 timestep still no progress, terminated
+    terminal_judge_start = 5 #1000  # If after 100 timestep still no progress, terminated
     speed_ratio = 100
     termination_limit_progress = 5/speed_ratio  # [km/h], episode terminates if car is running slower than this limit
     default_speed = 50 
@@ -162,7 +162,7 @@ class TorcsEnv:
             print("***"*10)
             print("***"*10)
             #reward += -200*np.abs(np.sin(obs['angle']/2)) #out of track penalty
-            reward += -(1-np.exp(-np.abs(8*(obs['angle'])/np.pi)))
+            reward += -2*(1-np.exp(-np.abs(8*(obs['angle'])/np.pi)))
             episode_terminate = True
             self.oot_count +=1
             if self.oot_count >9:
