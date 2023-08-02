@@ -4,9 +4,9 @@ import gym
 import sys
 
 
-HIDDEN1 = 400
-HIDDEN2 = 300
-HIDDEN3 = 300
+HIDDEN1 = 300
+HIDDEN2 = 600
+#HIDDEN3 = 300
 
 
 xavier = tf.contrib.layers.xavier_initializer()
@@ -22,8 +22,8 @@ def critic(tfs):
             l2 = tf.layers.dense(l1, HIDDEN2, activation=None, kernel_initializer=xavier, bias_initializer=bias_const, kernel_regularizer=regularizer)
             l2 = tf.nn.relu(l2)
 
-            l3 = tf.layers.dense(l2, HIDDEN3, activation=None, kernel_initializer=xavier, bias_initializer=bias_const, kernel_regularizer=regularizer) 
-            l3 = tf.nn.relu(l3)
+            #l3 = tf.layers.dense(l2, HIDDEN3, activation=None, kernel_initializer=xavier, bias_initializer=bias_const, kernel_regularizer=regularizer) 
+            #l3 = tf.nn.relu(l3)
 
-            v = tf.layers.dense(l3, 1, activation=None, kernel_initializer=rand_unif, bias_initializer=bias_const)
+            v = tf.layers.dense(l2, 1, activation=None, kernel_initializer=rand_unif, bias_initializer=bias_const)
             return v
