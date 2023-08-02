@@ -32,6 +32,7 @@ TAU = 0.001
 VISION = False
 
 relaunch_le = 15
+EP_MAX = 4000
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -48,8 +49,15 @@ file_path = 'Best/bestlaptime.csv'
 r_w = rw.RW(file_path)
 best_lap_time = r_w.read_numpy_array_from_csv()
 print(best_lap_time)
-w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv')
-w_total_csv = w_Out.OW(csv_path = 'OutputCsv/output_total.csv')
+w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv',headers = ['ep', 'step', 'a_1', 'a_2', 'a_3' , 'reward', 
+                                                              's_1', 's_2', 's_3', 's_4', 's_5', 's_6', 's_7', 's_8', 's_9', 's_10',
+                                                              's_11', 's_12', 's_13', 's_14', 's_15', 's_16', 's_17', 's_18', 's_19', 's_20',
+                                                              's_21', 's_22', 's_23', 's_24', 's_25', 's_26', 's_27', 's_28', 's_29', 
+                                                              'end_type', 'f_1', 'f_2', 'f_3', 'f_4', 'f_5', 'distRaced', 'distFromStart',
+                                                              'curLapTime', 'lastLapTime', 'loss'])
+w_total_csv = w_Out.OW(csv_path = 'OutputCsv/output_total.csv',headers = ['ep', 'step', 'end_type', 'col_count', 'oot_count', 'np_count', 
+                                                                          'wrong_direction', 'speedX', 'distRaced', 'distFromStart', 'last_lap_distance', 
+                                                                          'curLapTime', 'lastLapTime', 'total_reward'])
 
 ### ----------------------------------------------------------------------- ###
 
@@ -96,7 +104,7 @@ if torch.cuda.is_available():
 else:
     torch.set_default_tensor_type('torch.FloatTensor') 
 steps = 0
-for i in range(2000):
+for i in range(EP_MAX):
 
     total_reward = 0
     if np.mod(i, relaunch_le) == 0:
@@ -105,6 +113,9 @@ for i in range(2000):
         ob, distFromStart = env.reset()
 
     s_t = np.hstack((ob.angle, ob.track, ob.trackPos, ob.speedX, ob.speedY, ob.speedZ, ob.wheelSpinVel/100.0, ob.rpm))
+    
+    last_lap_distance = 0
+    event_counts = np.array([0, 0, 0, 0])
     
     for j in range(100000):
         loss = 0
@@ -133,8 +144,8 @@ for i in range(2000):
         a_t[0][1] = a_t_original[0][1] + noise_t[0][1]
         a_t[0][2] = a_t_original[0][2] + noise_t[0][2]
 
-        ob, distFromStart, r_t, done, info, end_type = env.step(a_t[0])
-        
+        ob, distFromStart, r_t, done, info, end_type, event_buff = env.step(a_t[0])
+        event_counts = event_counts + event_buff
         ### LAST LAP TIME ###
         if ob.lastLapTime > 0:
             print("lap time is : ",ob.lastLapTime)
@@ -225,6 +236,9 @@ for i in range(2000):
         print("--- Episode : {:<4}\tActions ".format(i)+ np.array2string(a_t, formatter={'float_kind': '{0:.3f}'.format})+"\tReward : {:8.4f}\tLoss : {:<8}".format(r_t,int(loss))+" ---")
         print("="*100)
         
+        if ob.distFromStart > last_lap_distance:
+            last_lap_distance = ob.distFromStart
+        
         #file_reward.write(str(i) + " "+ str(steps) + " "+ str(distFromStart) + " "+ str(r_t) +" "+ str(a_t[0][0]) +" "+ str(a_t[0][1]) +" "+ str(a_t[0][2]) + " "+ str(int(loss))+"\n") 
         #file_states.write(str(i) + " "+ str(steps) + " "+ str(ob.angle)  + " "+ str(ob.trackPos)+ " "+ str(ob.speedX)+ " "+ str(ob.speedY)+ " "+ str(ob.speedZ)+ "\n")
         
@@ -248,7 +262,7 @@ for i in range(2000):
     
     ### Saving total outputs for each episode --------------------------------------- ###
     # EDIT HERE AFTER
-    output_total_csv = np.hstack((i, j, end_type, ob.distRaced, ob.distFromStart, ob.curLapTime, ob.lastLapTime, total_reward))
+    output_total_csv = np.hstack((i, j, end_type, event_counts, ob.speedX, ob.distRaced, ob.distFromStart, last_lap_distance, ob.curLapTime, ob.lastLapTime, total_reward))
     w_total_csv.append_numpy_array_to_csv(np.matrix(output_total_csv))
     ### ----------------------------------------------------------------------------- ###
     

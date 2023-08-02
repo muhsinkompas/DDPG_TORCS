@@ -4,8 +4,11 @@ import csv
 
 class OW:
     
-    def __init__(self,csv_path = 'OutputCsv/output.csv'):
+    def __init__(self,csv_path = 'OutputCsv/output.csv', headers = None):
         self.csv_path = csv_path
+        if headers is not None:
+            with open(self.csv_path, 'wb') as csvfile:
+                csvfile.write(','.join(headers) + '\n')
     
     def write_numpy_array_to_csv(self, array):
         with open(self.csv_path, 'wb') as csvfile:

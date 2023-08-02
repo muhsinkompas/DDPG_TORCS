@@ -10,12 +10,17 @@ import os
 import time
 
 
-class TorcsEnv:
-    terminal_judge_start = 100  # If after 100 timestep still no progress, terminated
-    termination_limit_progress = 5  # [km/h], episode terminates if car is running slower than this limit
-    default_speed = 50
 
+class TorcsEnv:
+    terminal_judge_start = 32  # If after 100 timestep still no progress, terminated
+    speed_ratio = 1
+    termination_limit_progress = 5/speed_ratio  # [km/h], episode terminates if car is running slower than this limit
+    default_speed = 50
     initial_reset = True
+    
+    COLLISION_PENALTY = -100
+    LAP_COMPLETION_REWARD = 100.0
+    TIME_PENALTY = -0.20
 
     def __init__(self, vision=False, throttle=False, gear_change=False):
         self.vision = vision
@@ -25,7 +30,8 @@ class TorcsEnv:
         self.initial_run = True
         self.oot_count = 0
         self.no_prog_count = 0
-
+        self.old_distRaced = 0.0
+        self.old_distFromStart = 0.0
         ##print("launch torcs")
         os.system('pkill torcs')
         time.sleep(0.5)
@@ -63,18 +69,19 @@ class TorcsEnv:
             self.observation_space = spaces.Box(low=low, high=high)
 
     def step(self, u):
-       #print("Step")
-        # convert thisAction to the actual torcs actionstr
         client = self.client
-
         this_action = self.agent_to_torcs(u)
 
         # Apply Action
         action_torcs = client.R.d
-        
+        self.end_type = 0
+        self.col_event = 0
+        self.out_of_track_event = 0
+        self.no_prog_event = 0
+        self.wrong_direction_event = 0
         # Steering
         action_torcs['steer'] = this_action['steer']  # in [-1, 1]
-        self.end_type = 0
+        
         #  Simple Autnmatic Throttle Control by Snakeoil
         if self.throttle is False:
             target_speed = self.default_speed
@@ -133,51 +140,55 @@ class TorcsEnv:
         # direction-dependent positive reward
         track = np.array(obs['track'])
         trackPos = np.array(obs['trackPos'])
-        sp = np.array(obs['speedX'])
+        sp = np.array(obs['speedX'])/self.speed_ratio
         damage = np.array(obs['damage'])
         rpm = np.array(obs['rpm'])
+        episode_terminate = False
 
-
-        # sp is car speed. angle is angle between car and track line. trackPos is distance between middle of the line.
+        # Calculate the change in distance covered from the previous step
+        distance_covered = obs['distFromStart'] - self.old_distFromStart
+        #distance_covered = obs['distRaced'] - self.old_distRaced
+        
+        ############## REWARD ###############3
+        
         progress = sp*np.cos(obs['angle']) - np.abs(sp*np.sin(obs['angle'])) - sp * np.abs(obs['trackPos'])
         reward = progress
-        episode_terminate = False
-        
         
         # collision detection
         if obs['damage'] - obs_pre['damage'] > 0:
+            self.col_event = 1
             print("Car was damaged !!!")
             reward += -100
-            #episode_terminate = True
-            #client.R.d['meta'] = True
-            #self.end_type = 1
+            episode_terminate = True
+            client.R.d['meta'] = True
+            self.end_type = 1
 
         # Termination judgement #########################
-        
         if (abs(track.any()) > 1 or abs(trackPos) > 1):  # Episode is terminated if the car is out of track
+            self.out_of_track_event = 1
             print("***"*10)
             print("***"*10)
             print("Out of track ")
             print("***"*10)
             print("***"*10)
-            #reward += -200*np.abs(np.sin(obs['angle']/2))
-            reward += -200*(1-np.exp(-np.abs(4*(obs['angle'])/np.pi)))
-            self.oot_count +=1
+            reward += -200*(1-np.exp(-np.abs(4*(obs['angle'])/np.pi))) #out of track penalty
             episode_terminate = True
-            if self.oot_count >4:
+            self.oot_count +=1
+            if self.oot_count >6:
                 client.R.d['meta'] = True
                 self.end_type = 2
 
         if self.terminal_judge_start < self.time_step: # Episode terminates if the progress of agent is small
-            if progress < self.termination_limit_progress:
+            if sp < self.termination_limit_progress:
+                self.no_prog_event = 1
                 print("***"*10)
                 print("***"*10)
-                print("No progress")
+                print("No progress", sp)
                 print("***"*10)
                 print("***"*10)
                 self.no_prog_count += 1
                 episode_terminate = True
-                reward += (-40*self.no_prog_count)
+                reward += -40*self.no_prog_count
                 if self.no_prog_count >4:
                     client.R.d['meta'] = True
                     self.end_type = 3
@@ -191,32 +202,35 @@ class TorcsEnv:
                 self.no_prog_count = 0
 	    
         if np.cos(obs['angle']) < 0: # Episode is terminated if the agent runs backward
+            self.wrong_direction_event = 1
+            reward += -200
             print("Wrong direction")
-            reward += -50
             episode_terminate = True
             client.R.d['meta'] = True
             self.end_type = 4
         
-        #print("################################################")
-        #print(obs['lastLapTime'])
-        #print("################################################")
-        
-        
         if obs['lastLapTime'] > 0:
             print("...LAP FINISHED...")
-            reward = 100
+            reward = self.LAP_COMPLETION_REWARD
             episode_terminate = True
             client.R.d['meta'] = True
             self.end_type = 5
-
 
         if client.R.d['meta'] is True: # Send a reset signal
             self.initial_run = False
             client.respond_to_server()
 
+        # Penalize for taking too much time
+        reward += self.TIME_PENALTY
+        self.old_distRaced = obs['distRaced']
+        self.old_distFromStart = obs['distFromStart']
         self.time_step += 1
+
+        #normalized_reward = (reward - 76.9) / 46.4
+        reward = reward/200
+        
         ob, distFromStart = self.get_obs()
-        return ob, distFromStart, reward, client.R.d['meta'], {}, self.end_type
+        return ob, distFromStart, reward, client.R.d['meta'], {}, self.end_type, np.array([self.col_event, self.out_of_track_event, self.no_prog_event, self.wrong_direction_event])
 
     def reset(self, relaunch=False):
         self.time_step = 0

@@ -35,6 +35,7 @@ TD3/results/*
 *__pycache__*
 *model.json
 *model.h5
+*.pth
 
 PPO/__pycache__
 TD3/__pycache__
