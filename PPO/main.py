@@ -114,7 +114,7 @@ for ep in range(iter_num, EP_MAX):
         ob, r, done, _, end_type, event_buff = env.step(a)
         event_counts = event_counts + event_buff
         if np.sum(event_buff) > 0:
-            event_list_buff = np.hstack((i, j, event_buff, ob.distFromStart))
+            event_list_buff = np.hstack((ep, t, event_buff, ob.distFromStart))
             event_list = np.vstack((event_list, event_list_buff))
         ### LAST LAP TIME ###
         if ob.lastLapTime > 0:
