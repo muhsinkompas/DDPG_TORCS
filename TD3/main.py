@@ -58,7 +58,8 @@ w_csv = w_Out.OW(csv_path = 'OutputCsv/output.csv',headers = ['ep', 'step', 'a_1
 w_total_csv = w_Out.OW(csv_path = 'OutputCsv/output_total.csv',headers = ['ep', 'step', 'end_type', 'col_count', 'oot_count', 'np_count', 
                                                                           'wrong_direction', 'speedX', 'distRaced', 'distFromStart', 'last_lap_distance', 
                                                                           'curLapTime', 'lastLapTime', 'total_reward'])
-
+w_event_csv = w_Out.OW(csv_path = 'OutputCsv/event_history.csv',headers = ['ep', 'step', 'col_count', 'oot_count', 'np_count', 
+                                                                          'wrong_direction', 'distFromStart'])
 ### ----------------------------------------------------------------------- ###
 
 actor = ActorNetwork(state_size).to(device)
@@ -116,6 +117,7 @@ for i in range(EP_MAX):
     
     last_lap_distance = 0
     event_counts = np.array([0, 0, 0, 0])
+    event_list = np.array([0, 0, 0, 0, 0, 0, 0])
     
     for j in range(100000):
         loss = 0
@@ -146,6 +148,11 @@ for i in range(EP_MAX):
 
         ob, distFromStart, r_t, done, info, end_type, event_buff = env.step(a_t[0])
         event_counts = event_counts + event_buff
+        if np.sum(event_buff) > 0:
+            event_list_buff = np.hstack((i, j, event_buff, ob.distFromStart))
+            event_list = np.vstack((event_list, event_list_buff))
+        
+        
         ### LAST LAP TIME ###
         if ob.lastLapTime > 0:
             print("lap time is : ",ob.lastLapTime)
@@ -264,6 +271,7 @@ for i in range(EP_MAX):
     # EDIT HERE AFTER
     output_total_csv = np.hstack((i, j, end_type, event_counts, ob.speedX, ob.distRaced, ob.distFromStart, last_lap_distance, ob.curLapTime, ob.lastLapTime, total_reward))
     w_total_csv.append_numpy_array_to_csv(np.matrix(output_total_csv))
+    w_event_csv.append_numpy_array_to_csv(np.matrix(event_list))
     ### ----------------------------------------------------------------------------- ###
     
     if np.mod(i, 3) == 0:
