@@ -20,7 +20,7 @@ action_size = 3
 LRA = 0.0001
 LRC = 0.001
 BUFFER_SIZE = 100000  #to change
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 
 GAMMA = 0.95

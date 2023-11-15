@@ -96,7 +96,7 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
 
         print("Episode : " + str(i) + " Replay Buffer " + str(buff.count()))
 
-        if np.mod(i, 3) == 0:
+        if np.mod(i, 20) == 0:
             ob = env.reset(relaunch=True)   #relaunch TORCS every 3 episode because of the memory leak error
         else:
             ob = env.reset()
@@ -192,7 +192,7 @@ def playGame(train_indicator=0):    #1 means Train, 0 means simply Run
             
             #----------------------------------------------------------------------------------------------------------------
             # Saving outputs to csv file
-            print("saving csv")
+            #print("saving csv")
             output_csv = np.hstack((i, j, a_t[0], r_t, s_t, end_type, ob.focus, ob.distRaced, ob.distFromStart , ob.curLapTime, ob.lastLapTime, loss))
             w_csv.append_numpy_array_to_csv(output_csv)
             #----------------------------------------------------------------------------------------------------------------
